@@ -14,18 +14,21 @@ class WebpackTranspiler implements Transpiler {
     this.presetLoader = new PresetLoader;
   }
 
-  public transpile(files: Array<File>): Promise<TranspileResult> {
+  public async transpile(files: Array<File>): Promise<TranspileResult> {
     if (!this.webpackCompiler) {
-      this.initialize();
+      this.initializeCompiler();
     }
 
-    return Promise.resolve({
-      error: null,
-      outputFiles: []
-    });
+    try {
+      await this.webpackCompiler.replace(files);
+
+      return this.createSuccessResult(await this.webpackCompiler.emit());
+    } catch (err) {
+      return this.createErrorResult(`${err.name}: ${err.message}`);
+    }
   }
 
-  private initialize() {
+  private initializeCompiler() {
     const preset: WebpackPreset = this.presetLoader.loadPreset(this.project.toLowerCase());
 
     // Initialize the webpack compiler with the preset configuration
@@ -33,6 +36,20 @@ class WebpackTranspiler implements Transpiler {
 
     // Push the init files to the file system with the replace function
     this.webpackCompiler.replace(preset.getInitFiles());
+  }
+
+  private createErrorResult(error: string): TranspileResult {
+    return {
+      error,
+      outputFiles: []
+    };
+  }
+
+  private createSuccessResult(outPutFiles: File[]): TranspileResult {
+    return {
+      error: null,
+      outputFiles: outPutFiles
+    };
   }
 
   public getMappedLocation(sourceFileLocation: FileLocation): FileLocation {
