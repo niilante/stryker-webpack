@@ -1,8 +1,10 @@
 import WebpackTranspiler from '../../src/WebpackTranspiler';
 import PresetLoader, * as presetLoader from '../../src/presetLoader/PresetLoader';
+import WebpackCompiler, * as webpackCompiler from '../../src/compiler/WebpackCompiler';
+import { createTextFile } from '../helpers/producers';
 import * as sinon from 'sinon';
 import { Config } from 'stryker-api/config';
-import { Position } from 'stryker-api/core';
+import { Position, TextFile } from 'stryker-api/core';
 import { expect, assert } from 'chai';
 
 describe('WebpackTranspiler', () => {
@@ -11,12 +13,23 @@ describe('WebpackTranspiler', () => {
 
   // Stubs
   let presetLoaderStub: { loadPreset: sinon.SinonStub }
+  let webpackCompilerStub: WebpackCompilerStub;
+
+  // Example files
+  let exampleInitFile: TextFile = createTextFile('exampleInitFile');
 
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
 
+    webpackCompilerStub = sinon.createStubInstance(WebpackCompiler);
     presetLoaderStub = sinon.createStubInstance(PresetLoader);
+    presetLoaderStub.loadPreset.returns({
+      getWebpackConfig: () => {},
+      getInitFiles: () => [exampleInitFile]
+    });
+
     sandbox.stub(presetLoader, 'default').returns(presetLoaderStub);
+    sandbox.stub(webpackCompiler, 'default').returns(webpackCompilerStub);
 
     const config: Config = new Config;
     config.set({ project: 'Angular' });
@@ -43,6 +56,12 @@ describe('WebpackTranspiler', () => {
     assert(presetLoaderStub.loadPreset.calledWith('default'), `loadPreset not called with 'default'`);
   });
 
+  it('should call the webpackCompiler.replace method with the output of the webpackPreset.getFiles method', async () => {
+    await webpackTranspiler.transpile([]);
+
+    assert(webpackCompilerStub.replace.calledWith([exampleInitFile]), 'Not alled with exampleInitFile');
+  });
+
   it('should throw a not implemented error when calling the getMappedLocation method', () => {
     const position: Position = {
       line: 0,
@@ -58,3 +77,8 @@ describe('WebpackTranspiler', () => {
     expect(webpackTranspiler.getMappedLocation.bind(this, fileLocation)).to.throw(Error, 'Method not implemented.');
   });
 });
+
+interface WebpackCompilerStub {
+  replace: sinon.SinonStub;
+  emit(): sinon.SinonStub;
+}
