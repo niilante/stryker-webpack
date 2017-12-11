@@ -17,16 +17,16 @@ describe('WebpackTranspiler', () => {
 
   // Example files
   let exampleInitFile: TextFile = createTextFile('exampleInitFile');
+  let exampleBundleFile: TextFile = createTextFile('bundle.js');
 
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
 
     webpackCompilerStub = sinon.createStubInstance(WebpackCompiler);
+    webpackCompilerStub.emit.returns([exampleBundleFile]);
+
     presetLoaderStub = sinon.createStubInstance(PresetLoader);
-    presetLoaderStub.loadPreset.returns({
-      getWebpackConfig: () => {},
-      getInitFiles: () => [exampleInitFile]
-    });
+    presetLoaderStub.loadPreset.returns({ getWebpackConfig: () => {}, getInitFiles: () => [exampleInitFile] });
 
     sandbox.stub(presetLoader, 'default').returns(presetLoaderStub);
     sandbox.stub(webpackCompiler, 'default').returns(webpackCompilerStub);
@@ -62,6 +62,38 @@ describe('WebpackTranspiler', () => {
     assert(webpackCompilerStub.replace.calledWith([exampleInitFile]), 'Not alled with exampleInitFile');
   });
 
+  it('should call the webpackCompiler.replace function with the given files', async () => {
+    const files = [createTextFile('main.js'), createTextFile('sum.js'), createTextFile('divide.js')];
+
+    await webpackTranspiler.transpile(files);
+
+    assert(webpackCompilerStub.replace.calledWith(files), `replace function not called with ${files}`);
+  });
+
+  it('should call the webpackCompiler.emit function to get the new bundled files', async () => {
+    await webpackTranspiler.transpile([]);
+
+    assert(webpackCompilerStub.emit.called, 'Emit function not called');
+    assert(webpackCompilerStub.emit.calledOnce, 'Emit function called more than once');
+  });
+
+  it('should return a successResult with the bundled files on success', async () => {
+    const transpileResult = await webpackTranspiler.transpile([]);
+
+    expect(transpileResult.error).to.be.null;
+    expect(transpileResult.outputFiles).to.deep.equal([exampleBundleFile]);
+  });
+
+  it('should return a error result when an error occured', async () => {
+    const fakeError = 'compiler could not compile input files';
+    webpackCompilerStub.emit.throwsException(Error(fakeError));
+
+    const transpileResult = await webpackTranspiler.transpile([]);
+    
+    expect(transpileResult.outputFiles).to.be.an("array").that.is.empty;
+    expect(transpileResult.error).to.equal(`Error: ${fakeError}`);
+  });
+
   it('should throw a not implemented error when calling the getMappedLocation method', () => {
     const position: Position = {
       line: 0,
@@ -80,5 +112,5 @@ describe('WebpackTranspiler', () => {
 
 interface WebpackCompilerStub {
   replace: sinon.SinonStub;
-  emit(): sinon.SinonStub;
+  emit: sinon.SinonStub;
 }
