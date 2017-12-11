@@ -3,6 +3,7 @@ import { File } from 'stryker-api/core';
 import PresetLoader from './presetLoader/PresetLoader';
 import WebpackCompiler from './compiler/WebpackCompiler';
 import WebpackPreset from './presetLoader/WebpackPreset';
+import { TextFile } from 'stryker-api/src/core/File';
 
 class WebpackTranspiler implements Transpiler {
   private project: string;
@@ -20,7 +21,7 @@ class WebpackTranspiler implements Transpiler {
     }
 
     try {
-      await this.webpackCompiler.replace(files);
+      await this.webpackCompiler.replace(files as Array<TextFile>);
 
       return this.createSuccessResult(await this.webpackCompiler.emit());
     } catch (err) {
