@@ -40,7 +40,6 @@ class WebpackTranspiler implements Transpiler {
             error: error,
             outputFiles: []
         };
-
     }
 
     private createSuccessResult(outPutFiles: File[]): TranspileResult {
