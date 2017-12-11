@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "premocha": "npm run build",
-    "test": "npm run mocha && npm run stryker",
+    "lint": "tslint -c tslint.json **/*.ts --exclude \"**/*.d.ts\"",
+    "test": "npm run lint && npm run mocha && npm run stryker",
     "mocha": "nyc --reporter=html --report-dir=reports/coverage --check-coverage --lines 85 --functions 90 --branches 65 mocha \"test/unit/**/**/*.js\"",
     "stryker": "stryker run"
   },
@@ -53,6 +54,7 @@
     "stryker-mocha-framework": "^0.7.1",
     "stryker-mocha-runner": "^0.10.1",
     "stryker-typescript": "^0.8.0",
+    "tslint": "^5.8.0",
     "typescript": "^2.5.0",
     "webpack": "^3.7.1"
   },
