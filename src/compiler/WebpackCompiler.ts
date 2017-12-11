@@ -6,11 +6,11 @@ export default class WebpackCompiler {
 
   }
 
-  public replace(files: Array<File>): void {
+  public async replace(files: Array<File>): Promise<void> {
     throw new Error('Method not implemented');
   }
 
-  public emit(): Array<File> {
+  public async emit(): Promise<Array<File>> {
     throw new Error('Method not implemented');
   }
 }
