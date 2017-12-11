@@ -3,9 +3,8 @@ module.exports = function(config) {
     files: [
       '!src/**/*.ts',
       '!**/*.d.ts',
-      '!test/integration/**/*.ts',
       { pattern: 'src/**/*.ts', included: false, mutated: true },
-      { pattern: 'testResources/**/*.js', included: false, mutated: false, transpiled: false }
+      '!./src/index.ts'
     ],
     testRunner: "mocha",
     testFramework: "mocha",
