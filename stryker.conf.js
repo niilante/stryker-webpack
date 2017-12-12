@@ -4,6 +4,8 @@ module.exports = function(config) {
       '!src/**/*.ts',
       '!**/*.d.ts',
       { pattern: 'src/**/*.ts', included: false, mutated: true },
+      '!src/helpers/HybridFs.ts',
+      { pattern: 'src/helpers/HybridFs.ts', included: false, mutated: false },
       '!./src/index.ts'
     ],
     testRunner: "mocha",
