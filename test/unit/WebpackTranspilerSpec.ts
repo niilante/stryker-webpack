@@ -10,7 +10,8 @@ import { expect, assert } from 'chai';
 describe('WebpackTranspiler', () => {
   let webpackTranspiler: WebpackTranspiler;
   let sandbox: sinon.SinonSandbox;
-
+  let config: Config
+  
   // Stubs
   let presetLoaderStub: { loadPreset: sinon.SinonStub }
   let webpackCompilerStub: WebpackCompilerStub;
@@ -31,8 +32,8 @@ describe('WebpackTranspiler', () => {
     sandbox.stub(presetLoader, 'default').returns(presetLoaderStub);
     sandbox.stub(webpackCompiler, 'default').returns(webpackCompilerStub);
 
-    const config: Config = new Config;
-    config.set({ project: 'Angular' });
+    config = new Config;
+    config.set({ project: 'ExampleProject', baseDir: '/path/to/project' });
 
     webpackTranspiler = new WebpackTranspiler({ config, keepSourceMaps: false });
   });
@@ -45,11 +46,13 @@ describe('WebpackTranspiler', () => {
 
     assert(presetLoaderStub.loadPreset.called, 'loadPreset not called');
     assert(presetLoaderStub.loadPreset.calledOnce, 'loadPreset called more than once');
-    assert(presetLoaderStub.loadPreset.calledWith('angular'), `loadPreset not called with 'angular'`);
+    assert(presetLoaderStub.loadPreset.calledWith('exampleproject'), `loadPreset not called with 'exampleproject'`);
   });
 
   it('should use \'default\' as preset when none is provided', async () => {
-    const webpackTranspiler = new WebpackTranspiler({ config: new Config, keepSourceMaps: false });
+    const config = new Config;
+    config.set({ baseDir: '/path/to/project' });
+    const webpackTranspiler = new WebpackTranspiler({ config: config, keepSourceMaps: false });
 
     await webpackTranspiler.transpile([]);
 
@@ -92,6 +95,15 @@ describe('WebpackTranspiler', () => {
     
     expect(transpileResult.outputFiles).to.be.an("array").that.is.empty;
     expect(transpileResult.error).to.equal(`Error: ${fakeError}`);
+  });
+
+  it('should return an error when no baseDir is provided', async () => {
+    const webpackTranspiler = new WebpackTranspiler({ config: new Config, keepSourceMaps: false });
+
+    const transpileResult = await webpackTranspiler.transpile([]);
+    
+    expect(transpileResult.outputFiles).to.be.an("array").that.is.empty;
+    expect(transpileResult.error).to.equal(`Error: No baseDir defined, please define baseDir in your stryker.conf.js`);
   });
 
   it('should throw a not implemented error when calling the getMappedLocation method', () => {

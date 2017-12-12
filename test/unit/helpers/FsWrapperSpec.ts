@@ -6,7 +6,7 @@ import * as path from 'path';
 
 describe('FsWrapper', () => {
     let fsWrapper: FsWrapper;
-    let fsStubs: FsStubs;
+    let fsStub: FsStubs;
     let sandbox: sinon.SinonSandbox;
 
     const fakeErr: Error = new Error('err');
@@ -14,7 +14,7 @@ describe('FsWrapper', () => {
 
     beforeEach(() => {
         sandbox = sinon.sandbox.create();
-        fsStubs = createFsStubs();
+        fsStub = createFsStubs();
         fsWrapper = new FsWrapper(fs);
     });
 
@@ -37,12 +37,14 @@ describe('FsWrapper', () => {
 
                 await fsWrapper.readFile(path);
 
-                assert(fsStubs.readFile.calledWith(path, 'utf8'));
-            } catch (err) { }
+                assert(fsStub.readFile.calledWith(path, 'utf8'));
+            } catch (err) { 
+              assert(false, 'Method should not return an error');
+            }
         });
 
         it('should reject with an error when the readFile function on the given fs returns an error', async () => {
-            fsStubs.readFile.callsArgWith(2, fakeErr);
+            fsStub.readFile.callsArgWith(2, fakeErr);
 
             try {
                 await fsWrapper.readFile('asdf');
@@ -61,12 +63,14 @@ describe('FsWrapper', () => {
             try {
                 await fsWrapper.writeFile(examplePath, exampleFileContent);
 
-                assert(fsStubs.writeFile.calledWith(examplePath, exampleFileContent));
-            } catch (err) { }
+                assert(fsStub.writeFile.calledWith(examplePath, exampleFileContent));
+            } catch (err) { 
+              assert(false, 'Method should not return an error');
+            }
         });
 
         it('should reject with an error when writeFile on the given fs returns with an error', async () => {
-            fsStubs.writeFile.callsArgWith(2, fakeErr);
+            fsStub.writeFile.callsArgWith(2, fakeErr);
 
             try {
                 await fsWrapper.writeFile('asdf', 'asdf');
@@ -84,7 +88,7 @@ describe('FsWrapper', () => {
 
         beforeEach(() => {
             pathElementCounter = 0;
-            fsStubs.mkdir.callsFake((requestedPath: string, options: {}, callback: Function) => {
+            fsStub.mkdir.callsFake((requestedPath: string, options: {}, callback: Function) => {
                 const elements: Array<string> = requestedPath.split(path.sep);
 
                 if (elements.length > pathElementCounter + 1) {
@@ -102,7 +106,7 @@ describe('FsWrapper', () => {
         it('should call the mkdir function on the given fs with the given path', async () => {
             await fsWrapper.mkdirp(examplePath);
 
-            assert(fsStubs.mkdir.calledWith(examplePath));
+            assert(fsStub.mkdir.calledWith(examplePath));
         });
 
         it('should bubble down and back up again', async () => {
@@ -110,7 +114,7 @@ describe('FsWrapper', () => {
 
             await fsWrapper.mkdirp(examplePath);
 
-            assert(fsStubs.mkdir.callCount === callCount);
+            assert(fsStub.mkdir.callCount === callCount);
         });
 
         it('should reject with an error when a file exists in the given path', async () => {
@@ -143,22 +147,22 @@ describe('FsWrapper', () => {
         });
 
         it('should throw an error when an unknown error is thrown by mkdir', async () => {
-            fsStubs.mkdir.throws(new FileSystemError({code: 'UNKNOWN'}));
+            fsStub.mkdir.throws(new FileSystemError({code: 'UNKNOWN'}));
 
             try {
                 await fsWrapper.mkdirp('path/to/file');
 
                 assert(false, 'Function should throw an error!');
             } catch(err) {
-                assert(fsStubs.stat.notCalled);
+                assert(fsStub.stat.notCalled);
                 expect(err.code).to.equal('UNKNOWN');
             }
         });
 
         it('should throw an error when stat rejects with an error', async () => {
-            fsStubs.mkdir.throws(new FileSystemError({code: 'EEXIST'}));
+            fsStub.mkdir.throws(new FileSystemError({code: 'EEXIST'}));
 
-            fsStubs.stat.callsArgWith(1, fakeErr, null);
+            fsStub.stat.callsArgWith(1, fakeErr, null);
 
             try {
                 await fsWrapper.mkdirp('path/to/file');
