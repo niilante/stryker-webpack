@@ -1,4 +1,5 @@
 import { TranspilerOptions, Transpiler, TranspileResult, FileLocation } from 'stryker-api/transpile';
+import { Config } from 'stryker-api/config';
 import { File } from 'stryker-api/core';
 import PresetLoader from './presetLoader/PresetLoader';
 import WebpackCompiler from './compiler/WebpackCompiler';
@@ -6,21 +7,23 @@ import WebpackPreset from './presetLoader/WebpackPreset';
 import { TextFile } from 'stryker-api/src/core/File';
 
 class WebpackTranspiler implements Transpiler {
-  private project: string;
+  private config: Config;
   private presetLoader: PresetLoader;
   private webpackCompiler: WebpackCompiler;
 
   public constructor(options: TranspilerOptions) {
-    this.project = options.config.project || 'default';
+    this.config = options.config;
     this.presetLoader = new PresetLoader;
   }
 
   public async transpile(files: Array<File>): Promise<TranspileResult> {
-    if (!this.webpackCompiler) {
-      this.initializeCompiler();
-    }
-
     try {
+      if (!this.webpackCompiler) {
+        const baseDir = this.config.baseDir;
+
+        this.initialize(baseDir);
+      }
+
       await this.webpackCompiler.replace(files as Array<TextFile>);
 
       return this.createSuccessResult(await this.webpackCompiler.emit());
@@ -29,14 +32,25 @@ class WebpackTranspiler implements Transpiler {
     }
   }
 
-  private initializeCompiler() {
-    const preset: WebpackPreset = this.presetLoader.loadPreset(this.project.toLowerCase());
+  private initialize(baseDir: string) {
+    if (this.config.baseDir) {
+      const baseDir = this.config.baseDir;
 
-    // Initialize the webpack compiler with the preset configuration
-    this.webpackCompiler = new WebpackCompiler(preset.getWebpackConfig());
+      this.initializeCompiler(baseDir);
+    } else {
+      throw new Error('No baseDir defined, please define baseDir in your stryker.conf.js');
+    }
+  }
+
+  private initializeCompiler(baseDir: string) {
+    let project = this.config.project || 'default';
+
+    const preset: WebpackPreset = this.presetLoader.loadPreset(project.toLowerCase());
+
+    this.webpackCompiler = new WebpackCompiler(preset.getWebpackConfig(baseDir));
 
     // Push the init files to the file system with the replace function
-    this.webpackCompiler.replace(preset.getInitFiles());
+    this.webpackCompiler.replace(preset.getInitFiles(baseDir));
   }
 
   private createErrorResult(error: string): TranspileResult {
