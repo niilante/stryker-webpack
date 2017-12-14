@@ -15,8 +15,8 @@ export default class WebpackCompiler {
   private _outfiles: Array<string>;
 
   public constructor(webpackConfig: Configuration) {
-    const filesystem = new HybridFs(fs, memoryFs);
-    this._fsWrapper = new FsWrapper(fs);
+    const filesystem = new HybridFs(fs, new memoryFs);
+    this._fsWrapper = new FsWrapper(filesystem as any);
     this._compiler = this.createCompiler(webpackConfig, filesystem);
     this._outfiles = this.getOutFiles(webpackConfig.entry);
 
