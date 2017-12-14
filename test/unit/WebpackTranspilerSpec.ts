@@ -33,7 +33,7 @@ describe('WebpackTranspiler', () => {
     sandbox.stub(webpackCompiler, 'default').returns(webpackCompilerStub);
 
     config = new Config;
-    config.set({ project: 'ExampleProject', baseDir: '/path/to/project' });
+    config.set({ projectPreset: 'ExampleProject', projectRoot: '/path/to/project' });
 
     webpackTranspiler = new WebpackTranspiler({ config, keepSourceMaps: false });
   });
@@ -51,7 +51,7 @@ describe('WebpackTranspiler', () => {
 
   it('should use \'default\' as preset when none is provided', async () => {
     const config = new Config;
-    config.set({ baseDir: '/path/to/project' });
+    config.set({ projectRoot: '/path/to/project' });
     const webpackTranspiler = new WebpackTranspiler({ config: config, keepSourceMaps: false });
 
     await webpackTranspiler.transpile([]);
@@ -59,18 +59,18 @@ describe('WebpackTranspiler', () => {
     assert(presetLoaderStub.loadPreset.calledWith('default'), `loadPreset not called with 'default'`);
   });
 
-  it('should call the webpackCompiler.replace method with the output of the webpackPreset.getFiles method', async () => {
+  it('should call the webpackCompiler.writeFilesToFs method with the output of the webpackPreset.getFiles method', async () => {
     await webpackTranspiler.transpile([]);
 
-    assert(webpackCompilerStub.replace.calledWith([exampleInitFile]), 'Not alled with exampleInitFile');
+    assert(webpackCompilerStub.writeFilesToFs.calledWith([exampleInitFile]), 'Not alled with exampleInitFile');
   });
 
-  it('should call the webpackCompiler.replace function with the given files', async () => {
+  it('should call the webpackCompiler.writeFilesToFs function with the given files', async () => {
     const files = [createTextFile('main.js'), createTextFile('sum.js'), createTextFile('divide.js')];
 
     await webpackTranspiler.transpile(files);
 
-    assert(webpackCompilerStub.replace.calledWith(files), `replace function not called with ${files}`);
+    assert(webpackCompilerStub.writeFilesToFs.calledWith(files), `replace function not called with ${files}`);
   });
 
   it('should call the webpackCompiler.emit function to get the new bundled files', async () => {
@@ -123,6 +123,6 @@ describe('WebpackTranspiler', () => {
 });
 
 interface WebpackCompilerStub {
-  replace: sinon.SinonStub;
+  writeFilesToFs: sinon.SinonStub;
   emit: sinon.SinonStub;
 }

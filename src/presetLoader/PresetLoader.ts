@@ -9,13 +9,13 @@ export default class PresetLoader {
     this.loader = loader || /* istanbul ignore next */ require;
   }
 
-  public loadPreset(id: string): WebpackPreset {
-    const preset = (id === 'default') ? new DefaultPreset() : this.requirePreset(`stryker-webpack-${id}-preset`);
+  public loadPreset(projectPresetName: string): WebpackPreset {
+    const preset = (projectPresetName === 'default') ? new DefaultPreset() : this.requirePreset(`stryker-webpack-${projectPresetName}-preset`);
 
     try {
       this.checkInterfaceFunctions(preset);
     } catch (err) {
-      throw new Error(err.message.replace('<presetId>', `stryker-webpack-${id}-preset`));
+      throw new Error(err.message.replace('<presetId>', `stryker-webpack-${projectPresetName}-preset`));
     }
 
     return preset;

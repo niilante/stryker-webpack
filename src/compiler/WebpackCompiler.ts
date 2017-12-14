@@ -48,7 +48,7 @@ export default class WebpackCompiler {
     }
   }
 
-  public async replace(files: Array<TextFile>): Promise<void> {
+  public async writeFilesToFs(files: Array<TextFile>): Promise<void> {
     for (let file of files) {
       await this.writeToFs(file);
     }

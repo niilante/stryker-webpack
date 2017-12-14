@@ -37,13 +37,21 @@ describe('PresetLoader', () => {
   });
 
   it('should return an error when \'getInitFiles\' is not present on the required module', () => {
-    requireStub.returns(() => ({ getWebpackConfig: () => {}}));
+    requireStub.returns({ 
+      default: class {
+        getWebpackConfig() {};
+      }
+    });
 
     expect(() => presetLoader.loadPreset('angular')).to.throw(Error, `Cannot find property 'getInitFiles' on 'stryker-webpack-angular-preset'`);
   });
 
   it('should return an error when \'getWebpackConfig\' is not present on the required module', () => {
-    requireStub.returns(() => ({ getInitFiles: () => {}}));
+    requireStub.returns({ 
+      default: class {
+        getInitFiles() {};
+      }
+    });
 
     expect(() => presetLoader.loadPreset('angular')).to.throw(Error, `Cannot find property 'getWebpackConfig' on 'stryker-webpack-angular-preset'`);
   });
@@ -69,10 +77,12 @@ function fakeRequire(id: string): any {
     throw new Error(`Cannot find module '${id}'`);
   }
 
-  return () => ({
-    getWebpackConfig: () => {},
-    getInitFiles: () => {}
-  });
+  return {
+    default: class {
+      getWebpackConfig() {};
+      getInitFiles() {};
+    }
+  };
 }
 
 interface DefaultPresetStub {

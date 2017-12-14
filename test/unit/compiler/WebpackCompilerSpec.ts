@@ -36,7 +36,7 @@ describe('WebpackCompiler', () => {
 
   describe('replace', () => {
     it('should call the mkdirp function on the fsWrapper with the basedir of the given file', async () => {
-      await webpackCompiler.replace(fakeTextFileArray);
+      await webpackCompiler.writeFilesToFs(fakeTextFileArray);
 
       fakeTextFileArray.forEach((textFile, index) => {
         assert(fsWrapperStubs.mkdirp.getCall(index).calledWith(path.dirname(textFile.name)));
@@ -44,7 +44,7 @@ describe('WebpackCompiler', () => {
     });
 
     it('should call the writeFile function on the fsWrapper with the given file', async () => {
-      await webpackCompiler.replace(fakeTextFileArray);
+      await webpackCompiler.writeFilesToFs(fakeTextFileArray);
 
       fakeTextFileArray.forEach((textFile, index) => {
         assert(fsWrapperStubs.writeFile.getCall(index).calledWith(textFile.name));

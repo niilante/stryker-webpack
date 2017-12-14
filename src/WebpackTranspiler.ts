@@ -19,12 +19,12 @@ class WebpackTranspiler implements Transpiler {
   public async transpile(files: Array<File>): Promise<TranspileResult> {
     try {
       if (!this.webpackCompiler) {
-        const baseDir = this.config.baseDir;
+        const projectRoot = this.config.projectRoot;
 
-        await this.initialize(baseDir);
+        await this.initialize(projectRoot);
       }
 
-      await this.webpackCompiler.replace(files as Array<TextFile>);
+      await this.webpackCompiler.writeFilesToFs(files as Array<TextFile>);
 
       return this.createSuccessResult(await this.webpackCompiler.emit());
     } catch (err) {
@@ -32,25 +32,23 @@ class WebpackTranspiler implements Transpiler {
     }
   }
 
-  private async initialize(baseDir: string): Promise<void> {
-    if (this.config.baseDir) {
-      const baseDir = this.config.baseDir;
-
-      await this.initializeCompiler(baseDir);
+  private async initialize(projectRoot: string): Promise<void> {
+    if (projectRoot) {
+      await this.initializeCompiler(projectRoot);
     } else {
       throw new Error('No baseDir defined, please define baseDir in your stryker.conf.js');
     }
   }
 
-  private async initializeCompiler(baseDir: string): Promise<void> {
-    let project = this.config.project || 'default';
+  private async initializeCompiler(projectRoot: string): Promise<void> {
+    let project = this.config.projectPreset || 'default';
 
     const preset: WebpackPreset = this.presetLoader.loadPreset(project.toLowerCase());
 
-    this.webpackCompiler = new WebpackCompiler(preset.getWebpackConfig(baseDir));
+    this.webpackCompiler = new WebpackCompiler(preset.getWebpackConfig(projectRoot));
 
     // Push the init files to the file system with the replace function
-    await this.webpackCompiler.replace(preset.getInitFiles(baseDir));
+    await this.webpackCompiler.writeFilesToFs(preset.getInitFiles(projectRoot));
   }
 
   private createErrorResult(error: string): TranspileResult {
