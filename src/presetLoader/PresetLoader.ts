@@ -25,7 +25,7 @@ export default class PresetLoader {
     try {
       const constructor = this.loader(id);
 
-      return new constructor
+      return new constructor.default;
     } catch {
       throw new Error(`Cannot find Stryker Webpack preset '${id}', try to run npm i ${id} to install it`);
     }
