@@ -33,7 +33,7 @@ describe('WebpackTranspiler', () => {
     sandbox.stub(webpackCompiler, 'default').returns(webpackCompilerStub);
 
     config = new Config;
-    config.set({ projectPreset: 'ExampleProject', projectRoot: '/path/to/project' });
+    config.set({ webpack: { project: 'ExampleProject' } });
 
     webpackTranspiler = new WebpackTranspiler({ config, keepSourceMaps: false });
   });
@@ -51,7 +51,6 @@ describe('WebpackTranspiler', () => {
 
   it('should use \'default\' as preset when none is provided', async () => {
     const config = new Config;
-    config.set({ projectRoot: '/path/to/project' });
     const webpackTranspiler = new WebpackTranspiler({ config: config, keepSourceMaps: false });
 
     await webpackTranspiler.transpile([]);
@@ -95,15 +94,6 @@ describe('WebpackTranspiler', () => {
     
     expect(transpileResult.outputFiles).to.be.an("array").that.is.empty;
     expect(transpileResult.error).to.equal(`Error: ${fakeError}`);
-  });
-
-  it('should return an error when no baseDir is provided', async () => {
-    const webpackTranspiler = new WebpackTranspiler({ config: new Config, keepSourceMaps: false });
-
-    const transpileResult = await webpackTranspiler.transpile([]);
-    
-    expect(transpileResult.outputFiles).to.be.an("array").that.is.empty;
-    expect(transpileResult.error).to.equal(`Error: No baseDir defined, please define baseDir in your stryker.conf.js`);
   });
 
   it('should throw a not implemented error when calling the getMappedLocation method', () => {

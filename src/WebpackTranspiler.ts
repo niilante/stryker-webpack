@@ -1,10 +1,9 @@
 import { TranspilerOptions, Transpiler, TranspileResult, FileLocation } from 'stryker-api/transpile';
 import { Config } from 'stryker-api/config';
-import { File } from 'stryker-api/core';
+import { File, TextFile } from 'stryker-api/core';
 import PresetLoader from './presetLoader/PresetLoader';
 import WebpackCompiler from './compiler/WebpackCompiler';
 import WebpackPreset from './presetLoader/WebpackPreset';
-import { TextFile } from 'stryker-api/src/core/File';
 
 class WebpackTranspiler implements Transpiler {
   private config: Config;
@@ -19,9 +18,8 @@ class WebpackTranspiler implements Transpiler {
   public async transpile(files: Array<File>): Promise<TranspileResult> {
     try {
       if (!this.webpackCompiler) {
-        const projectRoot = this.config.projectRoot;
-
-        await this.initialize(projectRoot);
+        // Initialize the webpack compiler with the current directory (process.cwd)
+        await this.initialize(process.cwd(), this.config.webpack);
       }
 
       await this.webpackCompiler.writeFilesToFs(files as Array<TextFile>);
@@ -32,20 +30,23 @@ class WebpackTranspiler implements Transpiler {
     }
   }
 
-  private async initialize(projectRoot: string): Promise<void> {
-    if (projectRoot) {
-      await this.initializeCompiler(projectRoot);
-    } else {
-      throw new Error('No baseDir defined, please define baseDir in your stryker.conf.js');
-    }
+  private async initialize(projectRoot: string, strykerWebpackConfig?: StrykerWebpackConfig): Promise<void> {
+    strykerWebpackConfig = this.getStrykerWebpackConfig(strykerWebpackConfig);
+
+    await this.initializeCompiler(projectRoot, strykerWebpackConfig);
   }
 
-  private async initializeCompiler(projectRoot: string): Promise<void> {
-    let project = this.config.projectPreset || 'default';
+  private getStrykerWebpackConfig(strykerWebpackConfig?: StrykerWebpackConfig): StrykerWebpackConfig {
+    return {
+      project: (strykerWebpackConfig && strykerWebpackConfig.project) ? strykerWebpackConfig.project : 'default',
+      configLocation: (strykerWebpackConfig && strykerWebpackConfig.configLocation) ? strykerWebpackConfig.configLocation : undefined
+    };
+  }
 
-    const preset: WebpackPreset = this.presetLoader.loadPreset(project.toLowerCase());
+  private async initializeCompiler(projectRoot: string, strykerWebpackConfig: StrykerWebpackConfig): Promise<void> {
+    const preset: WebpackPreset = this.presetLoader.loadPreset(strykerWebpackConfig.project.toLowerCase());
 
-    this.webpackCompiler = new WebpackCompiler(preset.getWebpackConfig(projectRoot));
+    this.webpackCompiler = new WebpackCompiler(preset.getWebpackConfig(projectRoot, strykerWebpackConfig.configLocation));
 
     // Push the init files to the file system with the replace function
     await this.webpackCompiler.writeFilesToFs(preset.getInitFiles(projectRoot));
@@ -70,6 +71,11 @@ class WebpackTranspiler implements Transpiler {
     // Return a 'Method nog implemented' error for now.
     throw new Error('Method not implemented.');
   }
+}
+
+interface StrykerWebpackConfig {
+  project: string;
+  configLocation?: string;
 }
 
 export default WebpackTranspiler;
