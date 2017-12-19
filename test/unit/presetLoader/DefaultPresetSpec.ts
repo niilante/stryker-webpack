@@ -1,11 +1,12 @@
 import DefaultPreset from '../../../src/presetLoader/DefaultPreset';
 import * as sinon from 'sinon';
-import { expect } from 'chai';
+import { expect, assert } from 'chai';
 import * as path from 'path';
 
 describe('DefaultPreset', () => {
   let defaultPreset: DefaultPreset;
   let sandbox: sinon.SinonSandbox;
+  let loaderStub: sinon.SinonStub;
 
   let loader: any = {
     require: () => {}
@@ -14,7 +15,7 @@ describe('DefaultPreset', () => {
   beforeEach(() => {
     sandbox = sinon.sandbox.create();
     
-    sandbox.stub(loader, 'require').callsFake(fakeRequire);
+    loaderStub = sandbox.stub(loader, 'require').callsFake(fakeRequire);
 
     defaultPreset = new DefaultPreset(loader.require);
   });
@@ -41,6 +42,16 @@ describe('DefaultPreset', () => {
         filename: "bundle.js"
       }
     });
+  });
+
+  it('should call the require method with the given projectRoot and configLocation', () => {
+    const projectRoot = '/path/to/project';
+    const configLocation = './config/webpack.conf.js';
+    const expectedPath = path.join(projectRoot, configLocation);
+
+    defaultPreset.getWebpackConfig(projectRoot, configLocation);
+
+    assert(loaderStub.calledWith(expectedPath), `require method not called with ${ expectedPath }`);
   });
 
   it('should return an empty array when calling the getInitFiles method', () => {
