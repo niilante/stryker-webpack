@@ -1,7 +1,10 @@
+import { WebpackFileSystem } from '../types';
+
 const errors = require("errno");
 
 /* istanbul ignore next */
-class HybridFs {
+class HybridFs implements WebpackFileSystem {
+  
     private fs: any;
     private memoryFs: any;
 
@@ -10,7 +13,7 @@ class HybridFs {
         this.memoryFs = memoryFs;
     }
 
-    public readFileSync(path: string, optionsOrEncoding: string|Object) {
+    public readFileSync(path: string, optionsOrEncoding?: string|object) {
         try {
             return this.memoryFs.readFileSync(path, optionsOrEncoding);
         } catch(err) {
@@ -115,8 +118,12 @@ class HybridFs {
     public readlinkSync = (path: string) => this.memoryFs.readlinkSync(path);
     public readlink = (path: string, callback: Function) => this.memoryFs.readlink(path, callback);
 
-    public writeFileSync = (path: string, content: string, optionsOrEncoding?: string|Object) => this.memoryFs.writeFileSync(path, content, optionsOrEncoding);
-    public writeFile = (path: string, content: string, optionsOrEncoding: string|Object, callback: Function) => this.memoryFs.writeFile(path, content, optionsOrEncoding, callback);
+    public writeFileSync = (path: string, content: string, optionsOrEncoding?: string|Object) => {
+      this.memoryFs.writeFileSync(path, content, optionsOrEncoding);
+    }
+    public writeFile = (path: string, content: string, optionsOrEncoding: string|Object|{(err?: Error): any}, callback?: (err?: Error) => any) => {
+      this.memoryFs.writeFile(path, content, optionsOrEncoding, callback);
+    }
 
     public createReadStream = (path: string, options: Object) => this.memoryFs.createReadStream(path, options);
 
