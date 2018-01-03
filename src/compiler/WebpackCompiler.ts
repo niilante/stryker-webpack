@@ -6,30 +6,36 @@ import webpack from "./Webpack";
 import * as path from "path";
 import * as fs from 'fs';
 import FSBucket from '../helpers/FSBucket';
+import { BundleSorterPlugin } from './BundleSorterPlugin';
 
 const memoryFs = require('memory-fs');
 
 export default class WebpackCompiler {
   private _compiler: Compiler;
   private _inputFs: FsWrapper;
+  private _sorter: BundleSorterPlugin;
 
   private _outputFs: FSBucket = new FSBucket();
 
   public constructor(webpackConfig: Configuration) {
     const filesystem = new HybridFs(fs, new memoryFs);
     this._inputFs = new FsWrapper(filesystem as any);
+    this._sorter = new BundleSorterPlugin();
     this._compiler = this.createCompiler(webpackConfig, filesystem);
   }
 
   private createCompiler(webpackConfig: Configuration, fileSystem: HybridFs): Compiler {
+
     // Declare as any here to avoid errors when setting filesystem
-    const compiler: any = webpack(webpackConfig);
+    const plugins = webpackConfig.plugins || (webpackConfig.plugins = []);
+    plugins.push(this._sorter);
+    const compiler = webpack(webpackConfig);
 
     // Setting filesystem to provided fs so compilation can be done in memory
-    compiler.inputFileSystem = fileSystem;
+    (compiler as any).inputFileSystem = fileSystem;
     compiler.outputFileSystem = this._outputFs;
-    compiler.resolvers.normal.fileSystem = fileSystem;
-    compiler.resolvers.context.fileSystem = fileSystem;
+    (compiler as any).resolvers.normal.fileSystem = fileSystem;
+    (compiler as any).resolvers.context.fileSystem = fileSystem;
 
     return compiler as Compiler;
   }
@@ -60,7 +66,12 @@ export default class WebpackCompiler {
   private async getOutputFiles(): Promise<Array<TextFile>> {
     const outFiles = this._outputFs.files;
     this._outputFs.clear();
-    
+    const sortedFiles = this._sorter.sortedChunkNames;
+    outFiles.sort((a, b) => {
+      const aName = path.basename(a.name);
+      const bName = path.basename(b.name);
+      return sortedFiles.indexOf(aName) - sortedFiles.indexOf(bName);
+    });
     return outFiles;
   }
 
