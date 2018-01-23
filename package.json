@@ -22,8 +22,7 @@
     "stryker",
     "stryker-plugin",
     "typescript",
-    "webpack",
-    "stryker-transpiler"
+    "webpack"
   ],
   "author": "Sander koenders <sanderkoenders@gmail.com>",
   "contributors": [
